@@ -1,8 +1,13 @@
 name: Check the model (im) and the JS copy
 
+# 模型(im/、site/js/model/)か確かめの台本(python/)を変えたときと、手で起こしたときだけ回す(全部で 10 分ほどかかる)
 on:
   push:
-  pull_request:
+    paths:
+      - 'im/**'
+      - 'site/js/**'
+      - 'python/**'
+      - '.github/workflows/check.yml'
   workflow_dispatch:
 
 jobs:

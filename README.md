@@ -46,11 +46,12 @@ JRF の経済モデルの統合 2026年版
 
 ### Python と JS の一致について
 
-参照実装は Python の `im/` で、JS(`site/js/model/`)はその写しです。同じ数が出るように、im に持ち運べる乱数(xoshiro128\*\*)と持ち運べる最小化(Levenberg–Marquardt)の道(`rng='portable'`、`solver='portable'`)を足しました。`python/check_js_vs_py.py` が JS を quickjs で動かし、一国の場面 18、三国の場面 8 で、Python と年ごとに比べます。水準の量は各年の相対のずれ、差の量(物価上昇率、赤字、収支など)は系列の大きさに対するずれで、1e-9 以内で合います。ただし:
+参照実装は Python の `im/` で、JS(`site/js/model/`)はその写しです。同じ数が出るように、im に持ち運べる乱数(xoshiro128\*\*)と持ち運べる最小化(Levenberg–Marquardt)の道(`rng='portable'`、`solver='portable'`)を足しました。`python/check_js_vs_py.py` が JS を quickjs で動かし、一国の場面 18、三国の場面 8 で、Python と年ごとに比べます。水準の量は各年の相対のずれ、差の量(物価上昇率、赤字、収支など)は系列の大きさに対するずれで、手元では 1e-9 以内で合います(機械によって numpy の `exp`・`log` の最後の桁が違うので、CI の合否は 1e-8 で決めています)。ただし:
 
 * 価格は数値の微分を使って解くので、関数の値の丸めのずれが 1e8 倍ほどに増え、Python と JS の価格は 1e-11 ほどずれます。ふつうの道では、このずれは年を追って広がりません。
 * **不安定な道では、丸めのずれが育ちます。** 変動の為替で一国に価格の上限を置くと、その国の通貨が下がり続け(80 年で 1/20)、ずれは 60 年目まで 1e-9 以内ですが、80 年目で 6e-8 になります。この場面だけ、許容を 1e-6 にしています(Python と JS のずれをそこまで厳密に見る必要はないと判断し、場面の長さは縮めていません)。
 * **革命の場面では、預金のジニに意味のない年があります。** 再分配が入れ替わるたびに預金の総額が 0 の近くを通り、預金のジニ(分母が預金の和)が 82 のような値になります。この場面も許容を 1e-6 にしています。ほかの量は 1e-9 で合います。
+* 預金のジニ(分母が預金の和)は、ほかの場面でも預金の総額が小さい年に桁が落ちやすいので、どの場面でも許容 1e-6 で数えています(GitHub Actions の機械では numpy の `exp`・`log` の最後の桁が手元と違い、投票と年金の三国の場面で 1.7e-9 になりました)。
 * ブラウザの種類によって `Math.exp` などの最後の桁が違いうるので、URL で渡した試しは、別のブラウザでは長い年のあとに少しずれることがあります。同じブラウザでのやり直しとロードは、完全に同じ数になります。
 
 ## 中身
@@ -58,7 +59,7 @@ JRF の経済モデルの統合 2026年版
 * `notebooks/` … 八冊の IPYNB(実行済みの出力つき)。Pages の配備のときに HTML に変換します(再実行はしません)。
 * `im/` … 統合模型 im(ノート 4)の Python の一式と、段ごとの実験の台本と記録。詳しくは [im/README.md](https://github.com/JRF-2018/jrf_economy_models_2026/blob/master/im/README.md)。
 * `site/` … ブラウザの版。GitHub Actions(`.github/workflows/pages.yml`)で GitHub Pages に配備します。
-* `python/` … `check_js_vs_py.py`(JS と Python の一致)、`check_timeline.py`(時間のつまみ: 鍵の年から計算し直した枝が、通しの計算と同じ数になる)。CI は `.github/workflows/check.yml`(im の段ごとの関門 `im/test_im.py` も回します)。
+* `python/` … `check_js_vs_py.py`(JS と Python の一致)、`check_timeline.py`(時間のつまみ: 鍵の年から計算し直した枝が、通しの計算と同じ数になる)。CI は `.github/workflows/check.yml`(im の段ごとの関門 `im/test_im.py` も回します。10 分ほどかかるので、`im/`・`site/js/`・`python/` を変えたときと、手で起こしたときだけ回します)。
 * `lean/` … 各ノートが書き出す Lean のファイル(`lean/Notes/`)と、im の帳簿の恒等式(`Notes/im.lean`)。Lean 4(v4.34.1)と Mathlib。CI は `.github/workflows/lean.yml`。
 
 ```bash
