@@ -30,7 +30,7 @@ JRF の経済モデルの統合 2026年版
 
 どのノートも、上から順に実行すれば全部動きます(Python 3、numpy、scipy、matplotlib。ノート I は PyTorch、ノート O・P は Perl も使います)。元のコードは、決まった版を GitHub や作者のサイトから取ってきて、sha256 を確かめてから走らせます。ノート 4 は、このリポジトリの `im/` を使います(なければ `git clone` します)。並列の計算に fork を使うので、Linux か macOS を想定しています。
 
-各ノートの Lean のセルは、最後にまとめて確かめます。Lean 4(v4.34.1)と Mathlib の入った lake のプロジェクトの場所を、ノートと同じディレクトリの `.leandir` に一行で書いておくと動きます(なければ飛ばします)。
+各ノートの Lean のセルは、付録 A でまとめて確かめます。その前の「Lean の準備」のセルが、ノートと同じディレクトリの `.leandir` に書いた lake のプロジェクト(Lean 4 v4.34.1 と Mathlib)を使い、なければ elan と Mathlib を入れてプロジェクト `jrf_lean/` を作ります。Google Colab でもそのまま通ります(初めは数分〜10 分ほどかかり、10GB ほどの場所を使います)。
 
 ## ブラウザの版: The JRF Economy Model 2026(`site/`)
 
