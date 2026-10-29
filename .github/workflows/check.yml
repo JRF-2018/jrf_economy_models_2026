@@ -1,0 +1,23 @@
+name: Check the model (im) and the JS copy
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+      - name: Install numpy, scipy and quickjs
+        run: python -m pip install numpy scipy quickjs
+      - name: Stage gates of im (ledger closes, components off = same numbers)
+        run: cd im && python test_im.py
+      - name: JS model vs Python reference (quickjs)
+        run: python python/check_js_vs_py.py
+      - name: Time bar (recomputing from key years = straight run)
+        run: python python/check_timeline.py

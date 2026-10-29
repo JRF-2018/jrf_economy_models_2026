@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The JRF Economy Model 2026</title>
+<meta name="description" content="三つの国の経済の箱庭。統合模型 im(JRF の経済の模型のシリーズ、ノート 4)のブラウザの版。A sandbox of three economies built on the integrated model im.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/sandbox.css">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="js/model/rng.js"></script>
+<script src="js/model/solver.js"></script>
+<script src="js/model/im_core.js"></script>
+<script src="js/model/im1.js"></script>
+<script src="js/model/im3.js"></script>
+<script src="js/engine.js"></script>
+</head>
+<body>
+<div id="scene"></div>
+<div id="vignette"></div>
+
+<header id="top">
+  <div class="brand">
+    <div class="logo" aria-hidden="true"><span></span><span></span><span></span></div>
+    <div>
+      <h1 data-i18n="title">The JRF Economy Model 2026</h1>
+      <div class="sub" data-i18n="subtitle"></div>
+    </div>
+  </div>
+  <nav class="views">
+    <button data-view="sandbox" class="on" data-i18n="view_sandbox"></button>
+    <button data-view="analysis" data-i18n="view_analysis"></button>
+    <button data-view="life" data-i18n="view_life"></button>
+  </nav>
+  <div class="yearbox"><span class="ylab" data-i18n="year"></span><span id="year-num" class="ynum">0</span></div>
+  <div class="topright">
+    <button class="drawer-btn compact-only" data-drawer="left" data-i18n="drawer_left"></button>
+    <button class="drawer-btn compact-only" data-drawer="right" data-i18n="drawer_right"></button>
+    <button class="drawer-btn compact-only" data-drawer="events" data-i18n="drawer_events"></button>
+    <div id="ledger" class="ledger"><span class="dot"></span><span class="ledger-text"></span></div>
+    <div class="lang"><button data-lang="ja">日本語</button><button data-lang="en">English</button></div>
+    <button id="btn-sound" class="icon"></button>
+    <button id="btn-help" class="icon" data-i18n-title="help">?</button>
+    <button id="btn-settings" class="icon" data-i18n-title="settings"><svg viewBox="0 0 24 24"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zm8.4 4.6-.1-2.2 2-1.6-2-3.4-2.4.9-1.8-1.1-.4-2.5h-4l-.4 2.5-1.8 1.1-2.4-.9-2 3.4 2 1.6-.1 2.2-1.9 1.6 2 3.4 2.4-.9 1.8 1.1.4 2.5h4l.4-2.5 1.8-1.1 2.4.9 2-3.4z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></button>
+  </div>
+</header>
+
+<aside id="left" class="panel">
+  <div class="panel-title"><span data-i18n="operate"></span><button id="btn-overview" class="overview" data-i18n="overview"></button></div>
+  <div id="countries"></div>
+  <div id="levers"></div>
+</aside>
+
+<aside id="right" class="panel">
+  <div id="cards"></div>
+  <div class="legend">
+    <p data-i18n="legend_houses"></p>
+    <p data-i18n="legend_flows"></p>
+  </div>
+</aside>
+
+<aside id="life-left" class="panel life"></aside>
+<aside id="life-right" class="panel life"></aside>
+
+<section id="analysis" class="analysis">
+  <div class="atabs">
+    <button data-atab="compare" class="on" data-i18n="a_compare"></button>
+    <button data-atab="fan" data-i18n="a_fan"></button>
+    <button data-atab="map" data-i18n="a_map"></button>
+  </div>
+  <div id="apane-compare" class="apane on">
+    <div class="actl">
+      <label><span data-i18n="cmp_a"></span><select id="cmp-a"></select></label>
+      <label><span data-i18n="cmp_b"></span><select id="cmp-b"></select></label>
+      <label><span data-i18n="a_ind"></span><select id="cmp-ind"></select></label>
+      <label><span data-i18n="country"></span><select id="cmp-ctry"></select></label>
+    </div>
+    <div id="cmp-chart" class="achart"></div>
+    <div id="cmp-sum" class="asum"></div>
+  </div>
+  <div id="apane-fan" class="apane">
+    <div class="actl">
+      <label><span data-i18n="a_ind"></span><select id="fan-ind"></select></label>
+      <label><span data-i18n="country"></span><select id="fan-ctry"></select></label>
+      <label><span data-i18n="fan_n"></span><select id="fan-n"><option>12</option><option selected>24</option><option>48</option></select></label>
+      <label><span data-i18n="a_h"></span><select id="fan-h"><option>20</option><option selected>30</option><option>50</option></select></label>
+      <button id="fan-run" class="primary" data-i18n="fan_run"></button>
+    </div>
+    <div id="fan-chart" class="achart"></div>
+    <div id="fan-info" class="asum" data-i18n="fan_help"></div>
+  </div>
+  <div id="apane-map" class="apane">
+    <div class="actl">
+      <label><span data-i18n="map_x"></span><select id="map-x"></select></label>
+      <label><span data-i18n="map_y"></span><select id="map-y"></select></label>
+      <label><span data-i18n="a_ind"></span><select id="map-ind"></select></label>
+      <label><span data-i18n="a_h"></span><select id="map-h"><option>20</option><option selected>30</option><option>50</option></select></label>
+      <button id="map-run" class="primary" data-i18n="map_run"></button>
+    </div>
+    <div id="map-chart" class="achart"></div>
+    <div id="map-info" class="asum" data-i18n="map_help"></div>
+  </div>
+</section>
+
+<section id="bottom">
+  <div class="row-events">
+    <div class="events">
+      <span class="ev-title" data-i18n="ev_title"></span>
+      <button data-ev="disaster" class="ev ev-disaster"><i>⚡</i><span data-i18n="ev_disaster"></span></button>
+      <button data-ev="local" class="ev ev-local"><i>☔</i><span data-i18n="ev_local"></span></button>
+      <button data-ev="halve" class="ev ev-halve"><i>⚙</i><span data-i18n="ev_halve"></span></button>
+      <button data-ev="hike" class="ev ev-hike"><i>％</i><span data-i18n="ev_hike"></span></button>
+      <button data-ev="euphoria" class="ev ev-euphoria"><i>✦</i><span data-i18n="ev_euphoria"></span></button>
+      <button data-ev="workshop" class="ev ev-workshop"><i>◈</i><span data-i18n="ev_workshop"></span></button>
+    </div>
+    <div class="news"><span class="news-title" data-i18n="news"></span><ul id="news-list"></ul></div>
+  </div>
+  <div id="timebar">
+    <div class="tb-buttons">
+      <button id="to-start" data-i18n-title="start"><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
+      <button id="step-back" data-i18n-title="back"><svg viewBox="0 0 24 24"><path d="M17 5v14L6 12z"/></svg></button>
+      <button id="play" class="play" data-i18n-title="play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+      <button id="step-fwd" data-i18n-title="fwd"><svg viewBox="0 0 24 24"><path d="M7 5v14l11-7z"/></svg></button>
+      <button id="to-end" data-i18n-title="end"><svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg></button>
+      <span class="speeds"><button data-speed="1" class="on">×1</button><button data-speed="4">×4</button><button data-speed="16">×16</button></span>
+      <button id="btn-undo" class="undo" data-i18n-title="undo"><svg viewBox="0 0 24 24"><path d="M9 5 3 10l6 5v-3.5c5 0 8 1.5 10 5.5-.6-5.5-3.8-9-10-9.5z"/></svg></button>
+      <button id="dice" class="dice" data-i18n-title="dice"><span><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="#fff8e1" stroke="#7a4b00" stroke-width="1.6"/><circle cx="8" cy="8" r="1.7" fill="#7a4b00"/><circle cx="16" cy="16" r="1.7" fill="#7a4b00"/><circle cx="12" cy="12" r="1.7" fill="#7a4b00"/><circle cx="16" cy="8" r="1.7" fill="#7a4b00"/><circle cx="8" cy="16" r="1.7" fill="#7a4b00"/></svg></span></button>
+    </div>
+    <div id="bar">
+      <div id="bar-track"><div id="bar-done"></div><div id="bar-played"></div></div>
+      <div id="bar-flags"></div>
+      <div id="bar-knob"></div>
+      <div id="bar-ticks"></div>
+    </div>
+    <div class="tb-right">
+      <div class="years"><b id="year-num2">0</b><small>/ <span id="year-end">0</span></small></div>
+      <div id="tries"></div>
+      <button id="btn-save" class="icon" data-i18n-title="save"><svg viewBox="0 0 24 24"><path d="M5 3h11l3 3v15H5zM8 3v6h8V3M8 14h8v7H8z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></button>
+    </div>
+  </div>
+</section>
+
+<div id="savebox" class="popover">
+  <div id="slots"></div>
+  <div class="pop-row">
+    <button id="btn-export" data-i18n="export"></button>
+    <button id="btn-import" data-i18n="import"></button>
+    <button id="btn-share" data-i18n="share"></button>
+    <input id="file" type="file" accept="application/json" hidden>
+  </div>
+</div>
+<div id="settings" class="popover">
+  <label><span data-i18n="setup_cur"></span>
+    <select id="set-cur">
+      <option value="common" data-i18n="setup_common"></option><option value="ABx_Cy" data-i18n="setup_ABx_Cy"></option>
+      <option value="float" data-i18n="setup_float"></option><option value="fixed" data-i18n="setup_fixed"></option><option value="single" data-i18n="setup_single"></option>
+    </select></label>
+  <label><span data-i18n="setup_capital"></span>
+    <select id="set-cap"><option value="on" data-i18n="on"></option><option value="off" data-i18n="off"></option></select></label>
+  <label><span data-i18n="snd_vol"></span><input id="set-vol" type="range" min="0" max="1" step="0.05"></label>
+  <label><span data-i18n="quality"></span><span class="seg"><button data-q="high" class="on" data-i18n="q_high"></button><button data-q="low" data-i18n="q_low"></button></span></label>
+  <button id="btn-reset" class="primary" data-i18n="reset"></button>
+</div>
+<div id="helpbox" class="popover"><h3 data-i18n="help"></h3><p data-i18n="help_text"></p>
+  <p><a href="https://github.com/JRF-2018/jrf_economy_models_2026" target="_blank" rel="noopener" data-i18n="repo"></a><br><small>https://github.com/JRF-2018/jrf_economy_models_2026</small></p></div>
+
+<div id="modal" class="modal"><div class="modal-box"><div class="modal-head"><span class="modal-title"></span><button class="modal-close">✕</button></div><div class="modal-chart"></div></div></div>
+<div id="soon" class="soon"><div data-i18n="soon"></div></div>
+<div id="broken" class="broken"></div>
+<div id="toast" class="toast"></div>
+<div id="banner" class="banner"><div class="banner-big"></div><div class="banner-sub"></div></div>
+<div id="boot" class="boot"><div class="boot-logo"><span></span><span></span><span></span></div><div class="boot-title">The JRF Economy Model 2026</div></div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

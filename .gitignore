@@ -1,0 +1,5 @@
+/lean/.lake
+.lake/
+__pycache__/
+*.pyc
+.leandir

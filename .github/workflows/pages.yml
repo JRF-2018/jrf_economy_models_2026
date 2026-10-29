@@ -1,0 +1,57 @@
+name: Deploy site to GitHub Pages
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pandoc and nbconvert
+        run: |
+          sudo apt-get update && sudo apt-get install -y pandoc
+          python -m pip install --upgrade pip
+          pip install nbconvert
+      - name: Build site
+        run: |
+          mkdir -p public
+          cp -r site/* public/
+          # README を index.html にする(数式は MathJax で表示)
+          pandoc README.md -o public/index.html --standalone --from gfm --mathjax \
+            --metadata pagetitle="jrf_economy_models_2026" --metadata lang=ja
+          # IPYNB を HTML にする(実行済みの出力をそのまま使う。再実行はしない)
+          for nb in notebooks/*.ipynb; do
+            jupyter nbconvert --to html "$nb" --output-dir public/
+          done
+          # index.html の中の site/ と notebooks/*.ipynb へのリンクを、Pages 上のものに書き換える
+          sed -i 's/"site\//"/g; s/"notebooks\/\([A-Za-z0-9_]*\)\.ipynb"/"\1.html"/g' public/index.html
+          ls -R public
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
